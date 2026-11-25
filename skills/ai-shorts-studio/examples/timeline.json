@@ -1,0 +1,330 @@
+{
+ "library": "library.json",
+ "voice": "voice.mp3",
+ "channel_name": "My Channel",
+ "card_height": 945,
+ "hot_words": {
+  "AI": "cyan",
+  "MISS": "red",
+  "FAVORITE": "yellow",
+  "COMMENT": "yellow",
+  "FOLLOW": "green",
+  "2026": "yellow",
+  "5": "yellow",
+  "coding": "yellow",
+  "research": "yellow",
+  "research,": "yellow",
+  "sources": "yellow",
+  "powerful": "yellow",
+  "all-rounder": "green",
+  "assistant": "yellow",
+  "multimodal": "yellow",
+  "images": "yellow"
+ },
+ "captions": [
+  {
+   "s": 5.35,
+   "e": 8.88,
+   "text": "2026 में AI की दुनिया तेज़ी से बढ़ रही है"
+  },
+  {
+   "s": 9.57,
+   "e": 12.38,
+   "text": "अगर आप इन 5 AI tools को नहीं जानते"
+  },
+  {
+   "s": 12.78,
+   "e": 14.4,
+   "text": "तो आप बहुत कुछ MISS कर रहे हैं"
+  },
+  {
+   "s": 17.51,
+   "e": 21.74,
+   "text": "AI की मदद से coding और software development को आसान बनाता है"
+  },
+  {
+   "s": 24.95,
+   "e": 29.74,
+   "text": "इंटरनेट पर research करने और sources के साथ जवाब पाने के लिए शानदार"
+  },
+  {
+   "s": 32.92,
+   "e": 37.88,
+   "text": "Google ecosystem, research और multimodal AI के लिए बेहद उपयोगी"
+  },
+  {
+   "s": 40.45,
+   "e": 45.62,
+   "text": "writing, complex reasoning और coding के लिए दमदार AI assistant"
+  },
+  {
+   "s": 48.79,
+   "e": 56.19,
+   "text": "research, content creation, coding, images और रोज़मर्रा के कामों के लिए powerful all-rounder"
+  },
+  {
+   "s": 56.84,
+   "e": 57.6,
+   "text": "तो बताओ"
+  },
+  {
+   "s": 57.71,
+   "e": 60.25,
+   "text": "इनमें से आपका FAVORITE AI tool कौन सा है?"
+  },
+  {
+   "s": 60.78,
+   "e": 61.99,
+   "text": "COMMENT में ज़रूर बताना"
+  },
+  {
+   "s": 62.45,
+   "e": 65.25,
+   "text": "और ऐसे ही AI updates के लिए FOLLOW कर लेना"
+  }
+ ],
+ "scenes": [
+  {
+   "type": "full",
+   "clip": "hook_calm",
+   "t0": 0,
+   "t1": 5.35,
+   "overlay": {
+    "title": [
+     {
+      "words": [
+       "TOP",
+       "5"
+      ],
+      "colors": [
+       "white",
+       "yellow"
+      ],
+      "size": 210,
+      "font": "title",
+      "y": 230,
+      "t": 1.4
+     },
+     {
+      "words": [
+       "AI",
+       "TOOLS"
+      ],
+      "colors": [
+       "cyan",
+       "white"
+      ],
+      "size": 170,
+      "font": "title",
+      "y": 420,
+      "t": 1.7
+     },
+     {
+      "words": [
+       "You",
+       "Should",
+       "Know",
+       "in",
+       "2026"
+      ],
+      "colors": [
+       "white",
+       "white",
+       "white",
+       "white",
+       "yellow"
+      ],
+      "size": 64,
+      "y": 560,
+      "t": 2.6
+     }
+    ]
+   }
+  },
+  {
+   "type": "full",
+   "clip": "point_right",
+   "t0": 5.35,
+   "t1": 9.45
+  },
+  {
+   "type": "full",
+   "clip": "point_thumb",
+   "t0": 9.45,
+   "t1": 12.7
+  },
+  {
+   "type": "full",
+   "clip": "mind_blown",
+   "t0": 12.7,
+   "t1": 15.0,
+   "clip_offset": 1.4
+  },
+  {
+   "type": "board",
+   "clip": "sq_talk",
+   "t0": 15.0,
+   "t1": 22.3,
+   "card": {
+    "rank": 5,
+    "name": "CURSOR",
+    "tag": "AI Code Editor",
+    "chips": [
+     "Coding",
+     "Software Dev",
+     "Auto-complete"
+    ],
+    "color": [
+     0,
+     229,
+     255
+    ],
+    "num_t": 15.12,
+    "name_t": 16.48,
+    "logo": "logos/cursor.png"
+   }
+  },
+  {
+   "type": "board",
+   "clip": "sq_think",
+   "t0": 22.3,
+   "t1": 30.2,
+   "card": {
+    "rank": 4,
+    "name": "PERPLEXITY",
+    "tag": "AI Answer Engine",
+    "chips": [
+     "Research",
+     "Sources",
+     "Web Search"
+    ],
+    "color": [
+     32,
+     214,
+     190
+    ],
+    "num_t": 22.47,
+    "name_t": 23.75,
+    "logo": "logos/perplexity.png"
+   }
+  },
+  {
+   "type": "board",
+   "clip": "sq_point_up",
+   "t0": 30.2,
+   "t1": 38.4,
+   "card": {
+    "rank": 3,
+    "name": "GEMINI",
+    "tag": "Google का Multimodal AI",
+    "chips": [
+     "Google Ecosystem",
+     "Research",
+     "Multimodal"
+    ],
+    "color": [
+     110,
+     140,
+     255
+    ],
+    "num_t": 30.4,
+    "name_t": 31.56,
+    "logo": "logos/gemini.png"
+   }
+  },
+  {
+   "type": "board",
+   "clip": "sq_count",
+   "t0": 38.4,
+   "t1": 46.0,
+   "card": {
+    "rank": 2,
+    "name": "CLAUDE",
+    "tag": "Smart AI Assistant",
+    "chips": [
+     "Writing",
+     "Reasoning",
+     "Coding"
+    ],
+    "color": [
+     235,
+     135,
+     95
+    ],
+    "num_t": 38.55,
+    "name_t": 39.65,
+    "logo": "logos/claude.png"
+   }
+  },
+  {
+   "type": "board",
+   "clip": "sq_clap",
+   "t0": 46.0,
+   "t1": 52.3,
+   "card": {
+    "rank": 1,
+    "name": "CHATGPT",
+    "tag": "Powerful All-Rounder",
+    "chips": [
+     "Research",
+     "Content",
+     "Coding",
+     "Images",
+     "Daily Tasks"
+    ],
+    "color": [
+     16,
+     190,
+     140
+    ],
+    "num_t": 46.28,
+    "name_t": 47.56,
+    "logo": "logos/chatgpt.png"
+   }
+  },
+  {
+   "type": "board",
+   "clip": "sq_nod",
+   "t0": 52.3,
+   "t1": 56.6,
+   "card": {
+    "rank": 1,
+    "name": "CHATGPT",
+    "tag": "Powerful All-Rounder",
+    "chips": [
+     "Research",
+     "Content",
+     "Coding",
+     "Images",
+     "Daily Tasks"
+    ],
+    "color": [
+     16,
+     190,
+     140
+    ],
+    "num_t": 46.28,
+    "name_t": 47.56,
+    "logo": "logos/chatgpt.png",
+    "no_pop": true
+   }
+  },
+  {
+   "type": "outro",
+   "clip": "wave",
+   "t0": 56.6,
+   "t1": 65.3,
+   "overlay": {
+    "question": "आपका FAVORITE?",
+    "question_colors": [
+     "white",
+     "yellow"
+    ],
+    "question_t": 57.7,
+    "comment_t": 60.7,
+    "follow_t": 62.3
+   }
+  }
+ ],
+ "channel_avatar": null
+}

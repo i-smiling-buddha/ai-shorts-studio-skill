@@ -1,0 +1,112 @@
+{
+ "root": "library",
+ "clips": [
+  {
+   "id": "hook_calm",
+   "file": "916_hook_calm.mp4",
+   "aspect": "9:16",
+   "tags": [
+    "hook"
+   ],
+   "mask_ok": true
+  },
+  {
+   "id": "point_thumb",
+   "file": "916_point_thumb.mp4",
+   "aspect": "9:16",
+   "tags": [
+    "point"
+   ],
+   "mask_ok": true
+  },
+  {
+   "id": "mind_blown",
+   "file": "916_mind_blown.mp4",
+   "aspect": "9:16",
+   "tags": [
+    "surprise"
+   ],
+   "mask_ok": true
+  },
+  {
+   "id": "wave",
+   "file": "916_wave.mp4",
+   "aspect": "9:16",
+   "tags": [
+    "outro",
+    "greet"
+   ],
+   "mask_ok": true
+  },
+  {
+   "id": "sq_talk",
+   "file": "sq_talk.mp4",
+   "aspect": "square-in-16:9",
+   "tags": [
+    "board",
+    "talk"
+   ],
+   "mask_ok": true
+  },
+  {
+   "id": "sq_think",
+   "file": "sq_think.mp4",
+   "aspect": "square-in-16:9",
+   "tags": [
+    "board",
+    "think"
+   ],
+   "mask_ok": true
+  },
+  {
+   "id": "sq_point_up",
+   "file": "sq_point_up.mp4",
+   "aspect": "square-in-16:9",
+   "tags": [
+    "board",
+    "point"
+   ],
+   "mask_ok": true
+  },
+  {
+   "id": "sq_count",
+   "file": "sq_count.mp4",
+   "aspect": "square-in-16:9",
+   "tags": [
+    "board",
+    "count"
+   ],
+   "mask_ok": true
+  },
+  {
+   "id": "sq_clap",
+   "file": "sq_clap.mp4",
+   "aspect": "square-in-16:9",
+   "tags": [
+    "board",
+    "celebrate"
+   ],
+   "mask_ok": true
+  },
+  {
+   "id": "sq_nod",
+   "file": "sq_nod.mp4",
+   "aspect": "square-in-16:9",
+   "tags": [
+    "board",
+    "agree"
+   ],
+   "mask_ok": true
+  },
+  {
+   "id": "point_right",
+   "file": "916_point_right.mp4",
+   "aspect": "9:16",
+   "tags": [
+    "talk",
+    "point"
+   ],
+   "mask_ok": true
+  }
+ ]
+}

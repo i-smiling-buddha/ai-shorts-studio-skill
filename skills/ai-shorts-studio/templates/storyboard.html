@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Video Storyboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+/* VOICE: an editor's review bench — calm, decisive, one card per beat.
+   IDEA: the edit timeline itself; the strip at top is the cut, each card a beat on it.
+   PICTURE: proportional beat strip coloured by review status, then beat cards with the actual cut playing.
+   COLOUR and TYPE: the mascot's lavender hoodie as field, deep studio plum ink, per-tool colours as accents; Anton (brand titles) + Poppins (brand body).
+   LAYOUT: title + counts, strip, filter row, card grid (1 col on phone). */
+:root{color-scheme:light dark;
+--bg:light-dark(#efe9fb,#120d1f);--panel:light-dark(#ffffff,#1d1630);--ink:light-dark(#1d1530,#f1ecff);
+--soft:light-dark(#5b4f78,#b8acd6);--line:light-dark(#d9cff1,#352a52);--lav:light-dark(#8b6fe0,#a58bff);
+--ok:light-dark(#0f8a5f,#3ddc97);--no:light-dark(#c2352b,#ff6b5e);--wait:light-dark(#b9add6,#4a3f68)}
+:root[data-theme=light]{color-scheme:light}:root[data-theme=dark]{color-scheme:dark}
+*{box-sizing:border-box;min-width:0}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 Poppins,system-ui,sans-serif;overflow-x:clip}
+.band{padding:clamp(20px,3.5vw,48px) max(5vw,16px);max-width:1320px;margin:0 auto}
+h1{font:400 clamp(32px,5vw,52px)/1.05 Anton,Impact,sans-serif;margin:0;text-wrap:balance;letter-spacing:.5px}
+.sub{color:var(--soft);margin:6px 0 0;font-size:15px}
+.top{display:flex;flex-wrap:wrap;gap:16px 32px;align-items:end;justify-content:space-between}
+.counts{display:flex;gap:10px;flex-wrap:wrap}
+.cnt{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:8px 14px;text-align:center;min-width:86px}
+.cnt b{display:block;font:400 28px/1.1 Anton,sans-serif}.cnt span{font-size:13px;color:var(--soft)}
+.cnt.ok b{color:var(--ok)}.cnt.no b{color:var(--no)}
+.strip{display:flex;gap:3px;margin:22px 0 6px;height:64px}
+.seg{border:0;border-radius:8px;cursor:pointer;color:#fff;font:600 13px Poppins,sans-serif;padding:4px;position:relative;
+ background:var(--wait);overflow:hidden;display:flex;align-items:flex-end;justify-content:flex-start;min-width:22px}
+.seg[data-s=approved]{background:var(--ok)}.seg[data-s=rejected]{background:var(--no)}
+.seg:focus-visible,.btn:focus-visible,textarea:focus-visible,.tab:focus-visible{outline:3px solid var(--lav);outline-offset:2px}
+.axis{display:flex;justify-content:space-between;font-size:13px;color:var(--soft)}
+.tabs{display:flex;gap:8px;flex-wrap:wrap;margin:18px 0 0}
+.tab{border:1px solid var(--line);background:var(--panel);color:var(--ink);border-radius:999px;padding:10px 18px;font:600 14px Poppins;cursor:pointer;min-height:44px}
+.tab[aria-pressed=true]{background:var(--ink);color:var(--bg)}
+.note{font-size:13px;color:var(--soft);margin:12px 0 0}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,560px),1fr));gap:18px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:20px;padding:16px;display:grid;grid-template-columns:170px minmax(0,1fr);gap:16px;scroll-margin-top:20px}
+.card.global{grid-template-columns:minmax(0,1fr)}
+.card[data-s=approved]{border-color:var(--ok);box-shadow:0 0 0 1px var(--ok)}
+.card[data-s=rejected]{border-color:var(--no);box-shadow:0 0 0 1px var(--no)}
+video{width:170px;aspect-ratio:9/16;border-radius:12px;background:#000;display:block}
+.meta{font-size:13px;color:var(--soft);display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.pill{border-radius:999px;padding:1px 10px;font-weight:600;font-size:13px;white-space:nowrap;border:1px solid var(--line)}
+.pill.st[data-s=approved]{background:var(--ok);color:#fff;border-color:transparent}
+.pill.st[data-s=rejected]{background:var(--no);color:#fff;border-color:transparent}
+h2{font:400 26px/1.1 Anton,sans-serif;margin:4px 0 8px;letter-spacing:.3px}
+h3{font-size:13px;margin:12px 0 4px;color:var(--soft);font-weight:600}
+.cardtxt{border-left:4px solid var(--c,var(--lav));padding:4px 10px;font-size:14px}
+.cardtxt b{font-family:Anton,sans-serif;font-weight:400;font-size:18px;letter-spacing:.3px}
+ul{margin:0;padding-left:18px;font-size:14px}li{margin:2px 0}
+p.small{font-size:14px;margin:0}
+.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+.btn{border:2px solid var(--line);background:transparent;color:var(--ink);border-radius:12px;padding:8px 16px;font:600 15px Poppins;cursor:pointer;min-height:44px}
+.btn.ap[aria-pressed=true]{background:var(--ok);border-color:var(--ok);color:#fff}
+.btn.rj[aria-pressed=true]{background:var(--no);border-color:var(--no);color:#fff}
+.btn.save{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+textarea{width:100%;min-height:78px;margin-top:10px;border:1px solid var(--line);border-radius:12px;padding:10px;font:16px/1.4 Poppins,sans-serif;background:var(--bg);color:var(--ink);resize:vertical}
+.saved{font-size:13px;color:var(--soft);align-self:center}
+.foot{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+#status{font-size:14px;color:var(--soft)}
+@media(max-width:600px){.card{grid-template-columns:minmax(0,1fr)}video{width:min(240px,100%);margin:0 auto}.strip{height:48px}.seg{font-size:11px}}
+@media(prefers-reduced-motion:no-preference){.seg{transition:background .25s}}
+</style>
+</head>
+<body>
+<header class="band">
+ <div class="top">
+  <div>
+   <h1>Draft 1 storyboard</h1>
+   <p class="sub">हर beat को Approve या Reject करें, जहाँ बदलाव चाहिए वहाँ Feedback लिखें। आपके notes यहीं save होते हैं, Claude इन्हीं से अगला draft बनाएगा।</p>
+  </div>
+  <div class="counts" aria-live="polite">
+   <div class="cnt ok"><b id="nA">0</b><span>Approved</span></div>
+   <div class="cnt no"><b id="nR">0</b><span>Rejected</span></div>
+   <div class="cnt"><b id="nP">0</b><span>Pending</span></div>
+  </div>
+ </div>
+ <div class="strip" id="strip" role="list" aria-label="Beat timeline"></div>
+ <div class="axis"><span>0 s</span><span id="dur">1080×1920</span><span id="end"></span></div>
+ <div class="tabs" role="group" aria-label="Filter beats">
+  <button class="tab" data-f="all" aria-pressed="true">All</button>
+  <button class="tab" data-f="pending" aria-pressed="false">Pending</button>
+  <button class="tab" data-f="approved" aria-pressed="false">Approved</button>
+  <button class="tab" data-f="rejected" aria-pressed="false">Rejected</button>
+ </div>
+ <p class="note" id="status">Loading saved notes…</p>
+</header>
+<main class="band" style="padding-top:0"><div class="grid" id="grid"></div></main>
+<footer class="band foot">
+ <button class="btn save" id="copy">Copy notes as JSON</button>
+ <span class="saved" id="copyMsg"></span>
+</footer>
+<script>
+{
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+let beats=[],reviews={},filter='all',db=null,canWrite=true;
+const grid=document.getElementById('grid'),strip=document.getElementById('strip'),status=document.getElementById('status');
+const st=id=>(reviews[id]&&reviews[id].status)||'pending';
+const rgb=c=>c?`rgb(${c.join(',')})`:'';
+
+function card(b){
+ const s=st(b.id),r=reviews[b.id]||{},g=b.layout==='global';
+ const c=b.card?`<div class="cardtxt" style="--c:${rgb(b.color)}"><b>#${esc(b.card.rank)} ${esc(b.card.name)}</b> · ${esc(b.card.tag)}<br>${(b.card.chips||[]).map(esc).join(' · ')}</div>`:'';
+ return `<article class="card${g?' global':''}" id="${b.id}" data-s="${s}">
+ ${g?'':`<video controls playsinline preload="none" poster="${b.poster}" src="${b.preview}"></video>`}
+ <div>
+  <div class="meta"><span>Beat ${b.n}</span><span>${g?'whole video':`${b.t0.toFixed(2)}–${b.t1.toFixed(2)} s · ${(b.t1-b.t0).toFixed(1)} s`}</span><span class="pill">${esc(b.layout)}</span><span class="pill st" data-s="${s}">${s}</span></div>
+  <h2>${esc(b.title)}</h2>
+  ${c}
+  ${g?`<p class="small">${esc(b.note)}</p>`:`
+  <h3>Captions</h3><ul>${b.captions.map(t=>`<li>${esc(t)}</li>`).join('')}</ul>
+  <h3>B-roll</h3><p class="small">${esc(b.broll)}</p>
+  <h3>Assets</h3><ul>${b.assets.map(t=>`<li>${esc(t)}</li>`).join('')}${b.sfx.length?`<li>SFX: ${esc(b.sfx.join(', '))}</li>`:''}</ul>`}
+  <div class="actions">
+   <button class="btn ap" data-a="approved" data-id="${b.id}" aria-pressed="${s==='approved'}">✓ Approve</button>
+   <button class="btn rj" data-a="rejected" data-id="${b.id}" aria-pressed="${s==='rejected'}">✕ Reject</button>
+  </div>
+  <label class="sr" for="fb-${b.id}" style="position:absolute;left:-9999px">Feedback for beat ${b.n}</label>
+  <textarea id="fb-${b.id}" placeholder="Feedback — क्या बदलना है?">${esc(r.feedback||'')}</textarea>
+  <div class="actions"><button class="btn save" data-save="${b.id}">Save feedback</button><span class="saved" id="sv-${b.id}">${r.updatedAt?'Saved '+esc(new Date(r.updatedAt).toLocaleString()):''}</span></div>
+ </div></article>`;
+}
+function render(){
+ const vis=beats.filter(b=>filter==='all'||st(b.id)===filter);
+ grid.innerHTML=vis.length?vis.map(card).join(''):'<p class="note">इस filter में कोई beat नहीं है।</p>';
+ strip.innerHTML=beats.filter(b=>b.layout!=='global').map(b=>`<button class="seg" role="listitem" data-go="${b.id}" data-s="${st(b.id)}" style="flex:${(b.t1-b.t0).toFixed(2)}" title="${esc(b.title)}" aria-label="Beat ${b.n}: ${esc(b.title)}, ${st(b.id)}">${b.n}</button>`).join('');
+ const c={approved:0,rejected:0,pending:0};beats.forEach(b=>c[st(b.id)]++);
+ nA.textContent=c.approved;nR.textContent=c.rejected;nP.textContent=c.pending;
+ if(!canWrite)grid.querySelectorAll('button.btn,textarea').forEach(e=>e.disabled=true);
+}
+async function save(id,patch){
+ const b=beats.find(x=>x.id===id),cur=reviews[id]||{status:'pending',feedback:''};
+ const next={...cur,...patch,beat:b.title,n:b.n,t0:b.t0,t1:b.t1,updatedAt:new Date().toISOString()};
+ reviews[id]=next;render();
+ if(!db){status.textContent='Notes यहाँ save नहीं हो पा रहे (sign in करके claude.ai पर खोलें)।';return}
+ try{await db.doc('reviews/'+id).set(next);status.textContent='Saved · '+new Date().toLocaleTimeString()}
+ catch(e){if(e&&e.code==='invalid_argument'){canWrite=false;render();status.textContent='आपके पास इस board पर लिखने की permission नहीं है।'}else status.textContent='Save नहीं हुआ, फिर से try करें।'}
+}
+document.addEventListener('click',e=>{
+ const t=e.target.closest('button');if(!t)return;
+ if(t.dataset.a){const id=t.dataset.id;save(id,{status:st(id)===t.dataset.a?'pending':t.dataset.a,feedback:document.getElementById('fb-'+id).value})}
+ else if(t.dataset.save){const id=t.dataset.save;save(id,{feedback:document.getElementById('fb-'+id).value})}
+ else if(t.dataset.go){filter='all';document.querySelectorAll('.tab').forEach(x=>x.setAttribute('aria-pressed',x.dataset.f==='all'));render();document.getElementById(t.dataset.go)?.scrollIntoView({behavior:'smooth'})}
+ else if(t.dataset.f){filter=t.dataset.f;document.querySelectorAll('.tab').forEach(x=>x.setAttribute('aria-pressed',x===t));render()}
+ else if(t.id==='copy'){const out=beats.map(b=>({id:b.id,beat:b.title,...(reviews[b.id]||{status:'pending',feedback:''})}));
+  navigator.clipboard.writeText(JSON.stringify(out,null,1)).then(()=>copyMsg.textContent='Copied').catch(()=>copyMsg.textContent='Copy नहीं हो सका')}
+});
+fetch('beats.json').then(r=>r.json()).then(j=>{beats=j;const e=Math.max(...j.map(b=>b.t1));document.getElementById('end').textContent=e.toFixed(1)+' s';render();connect()}).catch(()=>{grid.innerHTML='<p class="note">Beats load नहीं हुए।</p>'});
+async function connect(){
+ db=await claude.use('db').catch(()=>null);
+ if(!db){status.textContent='Notes save करने के लिए इस page को claude.ai पर sign in करके खोलें।';return}
+ const timer=setTimeout(()=>status.textContent='Saved notes अभी load नहीं हुए — आप फिर भी review कर सकते हैं।',10000);
+ db.collection('reviews').onSnapshot(snap=>{
+  if(!snap.metadata.fromCache)clearTimeout(timer);
+  const next={};snap.docs.forEach(d=>{if(d.exists)next[d.id]=d.data()});
+  const typing=document.activeElement&&document.activeElement.tagName==='TEXTAREA';
+  reviews=next;if(!typing)render();
+  status.textContent=snap.empty?'अभी कोई note नहीं — पहला review शुरू करें।':'Notes synced · '+snap.size+' beats reviewed';
+ },e=>{clearTimeout(timer);status.textContent='Notes connection बंद हो गया — page reload करें।'});
+}
+}
+</script>
+</body>
+</html>

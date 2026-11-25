@@ -1,0 +1,13 @@
+{
+  "name": "ai-shorts-studio-skill",
+  "owner": { "name": "Smiling Buddha", "url": "https://desitechnology.com" },
+  "plugins": [
+    {
+      "name": "ai-shorts-studio-skill",
+      "source": "./",
+      "description": "Plan, generate and edit AI YouTube Shorts: Google Flow/Veo story kits, faceless masked-mascot Shorts with a clip library and mask fix, and a beginner Editing Studio with brand kit, beat cuts and an Approve/Reject storyboard.",
+      "version": "1.0.0",
+      "license": "MIT"
+    }
+  ]
+}

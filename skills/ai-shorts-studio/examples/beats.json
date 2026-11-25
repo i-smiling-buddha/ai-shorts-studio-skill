@@ -1,0 +1,46 @@
+[
+ {
+  "id": "b01",
+  "n": 1,
+  "title": "Hook — TOP 5 AI TOOLS title",
+  "t0": 0,
+  "t1": 5.35,
+  "layout": "full",
+  "clip": "presenter_clip.mp4",
+  "card": null,
+  "color": null,
+  "captions": [
+   "(intro line — no on-screen caption, title animates instead)"
+  ],
+  "broll": "Optional: neon data-wave backdrop behind the title (from the reference look) — or keep the studio set.",
+  "assets": [
+   "Clip: Raw Clips/presenter_clip.mp4"
+  ],
+  "sfx": [],
+  "preview": "cuts/b01.mp4",
+  "poster": "cuts/b01.jpg"
+ },
+ {
+  "id": "b02",
+  "n": 2,
+  "title": "Context — AI की दुनिया",
+  "t0": 5.35,
+  "t1": 9.45,
+  "layout": "full",
+  "clip": "presenter_clip.mp4",
+  "card": null,
+  "color": null,
+  "captions": [
+   "2026 में AI की दुनिया तेज़ी से बढ़ रही है"
+  ],
+  "broll": "None — mascot clip carries this beat.",
+  "assets": [
+   "Clip: Raw Clips/presenter_clip.mp4"
+  ],
+  "sfx": [
+   "whoosh at cut"
+  ],
+  "preview": "cuts/b02.mp4",
+  "poster": "cuts/b02.jpg"
+ }
+]
