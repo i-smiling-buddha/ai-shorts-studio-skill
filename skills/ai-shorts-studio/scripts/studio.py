@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
-"""Mascot Shorts Studio — renders a 9:16 Short from a clip library + timeline JSON.
-usage: python3 studio.py timeline.json out.mp4 [--stills]
+"""AI Shorts Studio — renders a 9:16 Short from a clip library + timeline JSON.
+usage: python3 studio.py timeline.json out.mp4 [--stills] [--force]
+Runs qc.py pre-render checks first and stops on FAIL unless --force.
 """
 import json, os, sys, math, subprocess, tempfile
 import numpy as np, cv2
@@ -64,9 +65,16 @@ def paste(fr, rgba, cx, cy, scale=1., alpha=1., rot=0):
 # ---------------- clips ----------------
 def content_box(path):
     """Detect pillar/letterbox: returns x0,y0,x1,y1 of non-black content."""
-    c = cv2.VideoCapture(path); n = int(c.get(7)); c.set(1, n // 2); ok, f = c.read()
+    c = cv2.VideoCapture(path)
+    if not c.isOpened(): sys.exit(f"cannot open clip: {path}")
+    n = int(c.get(7)); c.set(1, max(0, n // 2)); ok, f = c.read()
+    if not ok:
+        c.set(1, 0); ok, f = c.read()
+    if not ok: sys.exit(f"clip has no readable frames: {path}")
     g = cv2.cvtColor(f, cv2.COLOR_BGR2GRAY)
     cols = np.where(g.mean(0) > 14)[0]; rows = np.where(g.mean(1) > 14)[0]
+    if len(cols) < 16 or len(rows) < 16:          # (almost) black frame: use the whole frame
+        return 0, 0, f.shape[1], f.shape[0]
     return cols[0], rows[0], cols[-1] + 1, rows[-1] + 1
 
 def load_clip(path, box_w, box_h, mode, focus=(0.5, 0.4)):
@@ -89,7 +97,8 @@ def load_clip(path, box_w, box_h, mode, focus=(0.5, 0.4)):
 
 def clip_frame(clip, t, box_w, box_h, mode, zoom=1.0):
     frames, fps, focus = clip; n = len(frames); dur = n / fps
-    u = t % (2 * dur); u = u if u < dur else 2 * dur - u          # ping-pong only if scene > clip
+    if t < dur or not ALLOW_LOOP: u = min(t, dur)                 # past the end: hold the last frame (qc.py caps this at 1 s)
+    else: u = t % (2 * dur); u = u if u < dur else 2 * dur - u    # ping-pong only when the timeline sets allow_loop
     f = frames[min(n - 1, int(u * fps))]
     if mode == "width_top":
         if zoom != 1.0:
@@ -203,9 +212,17 @@ GRAD = np.clip((np.arange(H) - H * .62) / (H * .38), 0, 1)[:, None, None].astype
 def shade(fr, y0=0): return (fr.astype(np.float32) * (1 - GRAD[y0:y0 + fr.shape[0]])).astype(np.uint8)
 
 # ---------------- main ----------------
+ALLOW_LOOP = False
+
 def main():
+    global ALLOW_LOOP
+    if len(sys.argv) < 3: sys.exit(__doc__)
     tl_path, out = sys.argv[1], sys.argv[2]; stills = "--stills" in sys.argv
-    T = json.load(open(tl_path)); base = os.path.dirname(os.path.abspath(tl_path))
+    sys.path.insert(0, HERE); import qc                 # pre-render quality control
+    rep = qc.check_timeline(tl_path); rep.print("pre-render")
+    if rep.failed and "--force" not in sys.argv: sys.exit("QC failed — fix the timeline (or pass --force to render anyway)")
+    T = json.load(open(tl_path, encoding="utf-8")); base = os.path.dirname(os.path.abspath(tl_path))
+    ALLOW_LOOP = bool(T.get("allow_loop"))
     L = json.load(open(os.path.join(base, T["library"])))
     lib = {c["id"]: c for c in L["clips"]}
     for c in lib.values():
@@ -285,7 +302,7 @@ def main():
     w.writeframes((np.clip(sfx, -1, 1) * 32767).astype(np.int16).tobytes()); w.close()
     voice = os.path.join(base, T["voice"])
     subprocess.run(["ffmpeg", "-v", "error", "-y", "-i", vid, "-i", voice, "-i", sp, "-filter_complex",
-                    "[1:a]highpass=f=80,acompressor=threshold=-20dB:ratio=3,loudnorm=I=-15:TP=-1.5,aresample=48000[v];[v][2:a]amix=inputs=2:normalize=0:duration=first[a]",
+                    "[1:a]highpass=f=80,acompressor=threshold=-20dB:ratio=3,loudnorm=I=-14:TP=-1.5,aresample=48000[v];[v][2:a]amix=inputs=2:normalize=0:duration=first,alimiter=limit=0.85:level=disabled[a]",
                     "-map", "0:v", "-map", "[a]", "-c:v", "copy", "-c:a", "aac", "-b:a", "192k", "-shortest", "-movflags", "+faststart", out], check=True)
     print("wrote", out)
 

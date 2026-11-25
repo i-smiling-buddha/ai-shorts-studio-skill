@@ -50,5 +50,44 @@ class StudioTest(unittest.TestCase):
         self.assertEqual(wh, "1080,1920")
 
 
+    def qc(self, *args):
+        return subprocess.run([sys.executable, os.path.join(SCRIPTS, "qc.py"), *args], capture_output=True, text=True)
+
+    def test_qc_pre_pass(self):
+        r = self.qc("pre", os.path.join(self.d, "timeline.json"))
+        self.assertEqual(r.returncode, 0, r.stdout)
+        self.assertIn("coverage", r.stdout)
+
+    def bad_timeline(self, edit):
+        T = json.load(open(os.path.join(self.d, "timeline.json"), encoding="utf-8")); edit(T)
+        p = os.path.join(self.d, "bad.json"); json.dump(T, open(p, "w"), ensure_ascii=False); return p
+
+    def test_qc_pre_repeated_clip(self):
+        def edit(T): T["scenes"][2]["clip"] = "a"
+        r = self.qc("pre", self.bad_timeline(edit))
+        self.assertEqual(r.returncode, 1); self.assertIn("already used", r.stdout)
+
+    def test_qc_pre_board_needs_square(self):
+        def edit(T): T["scenes"][1]["clip"] = "b"; T["scenes"][2]["clip"] = "sq"
+        r = self.qc("pre", self.bad_timeline(edit))
+        self.assertEqual(r.returncode, 1); self.assertIn("square", r.stdout)
+
+    def test_qc_pre_gap_and_loop(self):
+        def edit(T): T["scenes"][1]["t0"] = 2.4; T["scenes"][2]["t1"] = 9.0
+        r = self.qc("pre", self.bad_timeline(edit))
+        self.assertEqual(r.returncode, 1); self.assertIn("gap", r.stdout); self.assertIn("would loop", r.stdout)
+
+    def test_render_refuses_failed_qc(self):
+        def edit(T): T["scenes"][2]["clip"] = "a"
+        r = subprocess.run([sys.executable, os.path.join(SCRIPTS, "studio.py"), self.bad_timeline(edit), os.path.join(self.d, "x", "x.mp4")], capture_output=True, text=True)
+        self.assertNotEqual(r.returncode, 0)
+
+    def test_qc_post(self):
+        out = self.run_studio()
+        r = self.qc("post", out, "--timeline", os.path.join(self.d, "timeline.json"), "--sheet", os.path.join(self.d, "cuts.jpg"))
+        self.assertIn("[PASS] format: 1080x1920", r.stdout, r.stdout)
+        self.assertTrue(os.path.exists(os.path.join(self.d, "cuts.jpg")))
+
+
 if __name__ == "__main__":
     unittest.main()

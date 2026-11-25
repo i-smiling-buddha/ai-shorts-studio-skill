@@ -6,6 +6,8 @@
 [![CI](https://github.com/i-smiling-buddha/ai-shorts-studio-skill/actions/workflows/ci.yml/badge.svg)](https://github.com/i-smiling-buddha/ai-shorts-studio-skill/actions/workflows/ci.yml)
 [![skills.sh](https://skills.sh/b/i-smiling-buddha/ai-shorts-studio-skill)](https://skills.sh/i-smiling-buddha/ai-shorts-studio-skill)
 
+![AI Shorts Studio Skill infographic](ai-shorts-studio-infographic.png)
+
 **YouTube Shorts के लिए आपका AI video editor। Plan · Generate · Edit · Review.**
 
 > अपनी voice recording और clips एक folder में डालिए, "start editing" बोलिए। आपका agent beats काटता है और storyboard बनाता है, जिसमें आप हर card को Approve या Reject करते हैं। फिर वो आपके notes से अगला draft आपके channel के style में बनाता है।
@@ -96,6 +98,9 @@ Studio/
 | **Captions** | 3-word pop-in captions, Hindi + English। Hot words रंगीन होते हैं (AI cyan, MISS red, FOLLOW green)। |
 | **No loops** | हर scene में अलग clip। Library छोटी हो तो skill बताती है कि कौन-सी clips और बनानी हैं। |
 | **Pacing** | हर 2–4 s में बदलाव, list items 6–8 s के। One-click AI editors जितनी जल्दबाज़ी नहीं। |
+| **Pre-render QC** | `qc.py pre` render से पहले ही ये गलतियाँ पकड़ता है: timeline में gap या overlap, voice पूरी cover न होना, clip repeat या missing, बहुत छोटी clip (जो loop हो जाती), board पर 9:16 clip, card fields/logos की कमी, बहुत तेज़ captions। |
+| **Post-render QC** | `qc.py post` बनी हुई video को PASS / WARN / FAIL देता है। Check होते हैं: 1080×1920 / 30 fps, duration, loudness (−14 LUFS, true peak ≤ −1), black frames, frozen video, silence और तेज़ flashes। साथ में हर cut की contact sheet बनती है। |
+| **हर agent में चलता है** | Claude में storyboard के notes artifact database में save होते हैं। दूसरी जगह browser में save होते हैं, और `notes.json` Download / Import कर सकते हैं। Disk पर रखी file से भी खुलता है। |
 | **Credit safety** | आपके OK के बिना कोई render या generation नहीं। पहले plan और stills दिखते हैं। |
 
 ## Quick examples
@@ -110,6 +115,7 @@ Studio/
 Renderer खुद चलाना हो तो:
 
 ```bash
+python skills/ai-shorts-studio/scripts/qc.py pre timeline.json                        # plan check
 python skills/ai-shorts-studio/scripts/studio.py timeline.json out/short.mp4 --stills   # preview frames
 python skills/ai-shorts-studio/scripts/studio.py timeline.json out/short.mp4            # full render
 python skills/ai-shorts-studio/scripts/maskclean.py clip.mp4 clip_fixed.mp4 --ref 0.5
@@ -128,6 +134,7 @@ python skills/ai-shorts-studio/scripts/maskclean.py clip.mp4 clip_fixed.mp4 --re
 ## Credits
 
 - Editing Studio का review loop [@AbdulMoizCreator](https://www.youtube.com/@AbdulMoizCreator) के Short "How to Edit like a Pro with Claude" से inspired है।
+- Quality-control के ideas [kajisho5/ffmpeg-skill](https://github.com/kajisho5/ffmpeg-skill) और [browser-use/video-use](https://github.com/browser-use/video-use) से लिए हैं (code नहीं, सिर्फ़ ideas)।
 - Offline speech recognition: [sherpa-onnx](https://github.com/k2-fsa/sherpa-onnx)।
 - Fonts: [Anton](https://github.com/googlefonts/AntonFont) और [Poppins](https://github.com/itfoundry/Poppins) (SIL OFL)।
 

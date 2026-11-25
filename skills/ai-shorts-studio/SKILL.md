@@ -3,7 +3,7 @@ name: ai-shorts-studio
 description: Plan, generate and edit AI YouTube Shorts and story videos — Google Flow/Veo story kits (history, mythology, kids 3D, viral cute), faceless masked-mascot Shorts (clip library, mask-mouth fix, board/split templates, official logos, Hindi captions, SFX) and a beginner Editing Studio that creates the folders, learns your style into a brand kit, cuts beats, builds an Approve/Reject storyboard and makes the next draft from your notes.
 license: MIT
 metadata:
-  version: "1.0.0"
+  version: "1.1.0"
 ---
 
 
@@ -138,8 +138,10 @@ Clips live in a folder on the user's computer (ask which the first time; connect
    - Optional per item: a 3–5 s full-screen B-roll of what the product does (abstract glowing UI, prompted with *no readable text and no logos*).
 3. **Official logos** for named products (Top-N, reviews, comparisons) — required so viewers recognise the product. Only official files the user supplies from each company's brand/press kit (`logos/<name>.png`, transparent PNG; verify alpha with transparent-png-check). Never let a model generate a logo and never redraw one in code. Composite unchanged (no recolour/stretch/crop/effects on the mark; proportional scale; clear space; a glow behind is fine), brand's own spelling beside it, used only to identify the product, never implying sponsorship. Mention once that each company's brand guidelines govern logo use. Missing logo → name card only, and tell the user which are missing.
 4. **All on-screen text is rendered in code** (ranks, names, taglines, chips, captions, pills) — never by the video model.
-5. Write `timeline.json`, render stills (`python3 scripts/studio.py timeline.json out/x.mp4 --stills`), look at them, **show the user the stills + scene plan and wait for OK**, then render the full video, check frames from the result, deliver with SendUserFile and save next to the user's library if connected.
-6. Channel name and avatar for the outro pill come from `Brand Kit/brand-kit.md` (e.g. `"channel_name": "Techie Monk"` with `Brand Kit/channel_emblem.png`) — never a guessed name or the creator's pen name.
+5. Write `timeline.json` and run **pre-render QC**: `python3 scripts/qc.py pre timeline.json`. Fix every FAIL (gaps/overlaps, scenes not covering the voice, missing or repeated clips, a scene longer than its clip + 1 s, 9:16 clip on a board, missing card fields or logo files, captions past the voice). Read the WARNs to the user in plain words.
+6. Render stills (`python3 scripts/studio.py timeline.json out/x.mp4 --stills`), look at them, **show the user the stills + scene plan + QC summary and wait for OK**. Then render the full video (`studio.py` re-runs pre-render QC and stops on FAIL).
+7. **Post-render QC + self-review**: `python3 scripts/qc.py post out/x.mp4 --timeline timeline.json --sheet out/qc_cuts.jpg` checks 1080x1920 / 30 fps, duration vs voice, loudness (about -14 LUFS, true peak ≤ -1 dBTP), black frames, frozen video, silence gaps and big flashes, and writes a sheet of every cut (0.5 s before, 0.1 s and 0.6 s after). Look at the sheet and at full-size frames for hidden captions, cropped mascot, wrong logo, mask mouth. Fix and re-check at most 3 times, then tell the user what is still open. Deliver with SendUserFile and save next to the user's library if connected.
+8. Channel name and avatar for the outro pill come from `Brand Kit/brand-kit.md` (e.g. `"channel_name": "Techie Monk"` with `Brand Kit/channel_emblem.png`) — never a guessed name or the creator's pen name.
 
 ### timeline.json
 ```json
@@ -161,7 +163,8 @@ Clips live in a folder on the user's computer (ask which the first time; connect
 ## 4. Scripts (in `scripts/`)
 - `scripts/studio.py` — `python3 scripts/studio.py timeline.json out/video.mp4 [--stills]`. Renders the 9:16 Short (full / board / outro scenes, cards, logos, captions, SFX, voice mix). Paths in the timeline are relative to the timeline file. Optional `"flash": 0–160` sets the white flash at cuts.
 - `scripts/maskclean.py` — `python3 scripts/maskclean.py in.mp4 out.mp4 [--ref SEC] [--trim SEC] [--no-polish]`. Removes mouth/smile shapes a video model paints on a fabric face mask and restores fabric texture.
-- `templates/storyboard.html` — the review dashboard for Mode C (reads `beats.json` + `cuts/`).
+- `scripts/qc.py` — `qc.py pre timeline.json` (plan checks) and `qc.py post video.mp4 --timeline timeline.json --sheet cuts.jpg` (render checks). Grades PASS / WARN / FAIL; exit code 1 on FAIL.
+- `templates/storyboard.html` — the review dashboard for Mode C (reads `beats.json`, or `beats.js` when opened from disk, + `cuts/`). Saves notes to the Claude artifact database when available, otherwise in the browser with Download / Import `notes.json`.
 - `examples/` — sample `library.json` and `timeline.json`.
 - Fonts (Anton, Poppins Bold with Devanagari; SIL OFL) ship in `fonts/`.
 - Needs Python 3.10+, `pip install numpy opencv-python-headless pillow` (Pillow with raqm for Hindi shaping), and FFmpeg.
@@ -196,20 +199,22 @@ If the user already has similar folders (e.g. `Sample Videos`, `Audio Tracks`, `
 ## C3. Analyse A-roll + assets → beats and cuts
 - Transcribe the A-roll (Mode B step 1) and split it into **beats**: hook, context lines, one beat per list item (split an item over ~9 s into two beats with different clips), outro. One global beat for whole-video issues.
 - For each beat pick a distinct checked clip, its logo/asset files, SFX, captions in that time range, and a B-roll proposal (abstract, no readable text, no logos; say whether it is code-rendered = free, or Flow = credits).
-- Write `Storyboard/beats.json`: `[{id:"b01", n, title, t0, t1, layout, clip, card, color, captions[], broll, assets[], sfx[], preview:"cuts/b01.mp4", poster:"cuts/b01.jpg"}]`.
+- Write `Storyboard/beats.json` and the same array as `Storyboard/beats.js` (`window.BEATS = [...]`, so the board also opens from disk with file://): `[{id:"b01", n, title, t0, t1, layout, clip, card, color, captions[], broll, assets[], sfx[], preview:"cuts/b01.mp4", poster:"cuts/b01.jpg"}]`.
 - Cuts: if a draft exists, cut each beat from it (`ffmpeg -ss t0 -to t1 -vf scale=360:640 -crf 30`) plus a poster frame; if not, build the cuts from stills only and ask before any render. Save them to `Storyboard/Cuts/`.
 
 ## C4. Storyboard dashboard (artifact)
 - Start from `templates/storyboard.html` (set the title). Publish a page with publish_files: `index.html`, `beats.json`, `cuts/*.mp4|jpg`. Then `declare_capabilities` with `{"db": {"rules": [{"path": "", "read": "view", "write": "admin"}]}}` so notes persist and Claude can read them.
 - Page: title + Approved/Rejected/Pending counts; a proportional **beat timeline strip** coloured by status (click to jump); filter tabs; one card per beat with the cut playing (9:16 video, poster, preload none), time range, layout, card text in the item colour, captions, B-roll, assets/SFX, **Approve** and **Reject** toggles, a Feedback textarea + Save; a "Copy notes as JSON" button. Style it from the brand kit (e.g. lavender + deep plum, Anton + Poppins).
 - Storage: `const db = await claude.use("db")`; doc `reviews/<beatId>` = `{status, feedback, beat, n, t0, t1, updatedAt}`; one `collection("reviews").onSnapshot` subscription with a 10 s loading note; don't re-render while the user is typing; escape every stored value.
+- Without the Claude artifact tools (Claude Code, Codex, Cursor…): copy the template to `Storyboard/index.html` beside `beats.json`, `beats.js` and `cuts/`, and tell the user to open it in a browser; notes stay in that browser until they press **Download notes.json** and save it in `Storyboard/` (or paste it in chat).
 - Tell the user in one line: review the cards, then write "review done".
 
 ## C5. Notes → next draft → brand kit
-1. On "review done": read `reviews` with db_list (slug of the dashboard), write `Storyboard/notes.json` = `{draft, video, storyboard, notes:[{id, beat, status, feedback, updatedAt}]}` and summarise the notes back to the user.
+1. On "review done": read `reviews` with db_list (slug of the dashboard) — or read `Storyboard/notes.json` the user saved — and write `Storyboard/notes.json` = `{draft, video, storyboard, notes:[{id, beat, status, feedback, updatedAt}]}` and summarise the notes back to the user.
 2. Plan Draft N+1: approved beats stay as they are; rejected beats and feedback become concrete changes (clip swap, timing, caption, B-roll, card text, global fixes). Show the change list + stills and **wait for OK before rendering**.
 3. After OK: render, save `Finished Videos/<title>_draftN.mp4`, re-cut the changed beats, republish the dashboard as the next round (reset those beats to pending), and keep earlier notes in `notes.json` history.
-4. Add every **approved** change to `brand-kit.md` under `## Approved changes log` with the date, and update the matching rule section so the next video follows it automatically. Rejected ideas are not added.
+4. Keep a short decision log in `Storyboard/project.md` (date, draft, what changed and why, open items) so a later session can continue.
+5. Add every **approved** change to `brand-kit.md` under `## Approved changes log` with the date, and update the matching rule section so the next video follows it automatically. Rejected ideas are not added.
 
 ---
 ## Output handling

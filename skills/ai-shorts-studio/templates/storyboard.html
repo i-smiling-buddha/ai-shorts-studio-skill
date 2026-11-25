@@ -93,12 +93,20 @@ textarea{width:100%;min-height:78px;margin-top:10px;border:1px solid var(--line)
 <main class="band" style="padding-top:0"><div class="grid" id="grid"></div></main>
 <footer class="band foot">
  <button class="btn save" id="copy">Copy notes as JSON</button>
+ <button class="btn" id="dl">Download notes.json</button>
+ <label class="btn" for="imp" style="display:inline-flex;align-items:center">Import notes.json</label>
+ <input type="file" id="imp" accept="application/json,.json" style="position:absolute;left:-9999px">
  <span class="saved" id="copyMsg"></span>
 </footer>
+<script src="beats.js"></script>
 <script>
 {
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-let beats=[],reviews={},filter='all',db=null,canWrite=true;
+let beats=[],reviews={},filter='all',db=null,canWrite=true,local=false;
+const LKEY='storyboard-notes:'+location.pathname;
+const loadLocal=()=>{try{return JSON.parse(localStorage.getItem(LKEY)||'{}')}catch(e){return{}}};
+const saveLocal=()=>{try{localStorage.setItem(LKEY,JSON.stringify(reviews))}catch(e){}};
+const notesJSON=()=>JSON.stringify({notes:beats.map(b=>({id:b.id,beat:b.title,...(reviews[b.id]||{status:'pending',feedback:''})}))},null,1);
 const grid=document.getElementById('grid'),strip=document.getElementById('strip'),status=document.getElementById('status');
 const st=id=>(reviews[id]&&reviews[id].status)||'pending';
 const rgb=c=>c?`rgb(${c.join(',')})`:'';
@@ -137,7 +145,7 @@ async function save(id,patch){
  const b=beats.find(x=>x.id===id),cur=reviews[id]||{status:'pending',feedback:''};
  const next={...cur,...patch,beat:b.title,n:b.n,t0:b.t0,t1:b.t1,updatedAt:new Date().toISOString()};
  reviews[id]=next;render();
- if(!db){status.textContent='Notes यहाँ save नहीं हो पा रहे (sign in करके claude.ai पर खोलें)।';return}
+ if(!db){saveLocal();status.textContent='Saved in this browser · Download notes.json और उसे Storyboard/ folder में रखें';return}
  try{await db.doc('reviews/'+id).set(next);status.textContent='Saved · '+new Date().toLocaleTimeString()}
  catch(e){if(e&&e.code==='invalid_argument'){canWrite=false;render();status.textContent='आपके पास इस board पर लिखने की permission नहीं है।'}else status.textContent='Save नहीं हुआ, फिर से try करें।'}
 }
@@ -147,13 +155,18 @@ document.addEventListener('click',e=>{
  else if(t.dataset.save){const id=t.dataset.save;save(id,{feedback:document.getElementById('fb-'+id).value})}
  else if(t.dataset.go){filter='all';document.querySelectorAll('.tab').forEach(x=>x.setAttribute('aria-pressed',x.dataset.f==='all'));render();document.getElementById(t.dataset.go)?.scrollIntoView({behavior:'smooth'})}
  else if(t.dataset.f){filter=t.dataset.f;document.querySelectorAll('.tab').forEach(x=>x.setAttribute('aria-pressed',x===t));render()}
- else if(t.id==='copy'){const out=beats.map(b=>({id:b.id,beat:b.title,...(reviews[b.id]||{status:'pending',feedback:''})}));
-  navigator.clipboard.writeText(JSON.stringify(out,null,1)).then(()=>copyMsg.textContent='Copied').catch(()=>copyMsg.textContent='Copy नहीं हो सका')}
+ else if(t.id==='copy'){navigator.clipboard.writeText(notesJSON()).then(()=>copyMsg.textContent='Copied').catch(()=>copyMsg.textContent='Copy नहीं हो सका')}
+ else if(t.id==='dl'){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([notesJSON()],{type:'application/json'}));a.download='notes.json';document.body.appendChild(a);a.click();a.remove();copyMsg.textContent='अगर download न हो तो Copy दबाकर notes.json में paste करें'}
 });
-fetch('beats.json').then(r=>r.json()).then(j=>{beats=j;const e=Math.max(...j.map(b=>b.t1));document.getElementById('end').textContent=e.toFixed(1)+' s';render();connect()}).catch(()=>{grid.innerHTML='<p class="note">Beats load नहीं हुए।</p>'});
+document.getElementById('imp').addEventListener('change',async e=>{const f=e.target.files[0];if(!f)return;
+ try{const j=JSON.parse(await f.text());(j.notes||j).forEach(n=>{if(n&&n.id)reviews[n.id]={status:n.status||'pending',feedback:n.feedback||'',updatedAt:n.updatedAt||new Date().toISOString()}});
+  if(db){for(const id of Object.keys(reviews)){const b=beats.find(x=>x.id===id);if(b)await db.doc('reviews/'+id).set({...reviews[id],beat:b.title,n:b.n,t0:b.t0,t1:b.t1})}}else saveLocal();
+  render();copyMsg.textContent='Imported'}catch(err){copyMsg.textContent='यह notes.json पढ़ा नहीं जा सका'}});
+const start=j=>{beats=j;const e=Math.max(...j.map(b=>b.t1));document.getElementById('end').textContent=e.toFixed(1)+' s';render();connect()};
+fetch('beats.json').then(r=>r.json()).then(start).catch(()=>{if(Array.isArray(window.BEATS))start(window.BEATS);else grid.innerHTML='<p class="note">Beats load नहीं हुए — beats.json (या file:// पर beats.js) इस page के पास रखें।</p>'});
 async function connect(){
- db=await claude.use('db').catch(()=>null);
- if(!db){status.textContent='Notes save करने के लिए इस page को claude.ai पर sign in करके खोलें।';return}
+ db=(window.claude&&typeof claude.use==='function')?await claude.use('db').catch(()=>null):null;
+ if(!db){local=true;reviews=loadLocal();render();status.textContent='Local mode: notes इसी browser में save होते हैं। Review के बाद "Download notes.json" दबाएँ।';return}
  const timer=setTimeout(()=>status.textContent='Saved notes अभी load नहीं हुए — आप फिर भी review कर सकते हैं।',10000);
  db.collection('reviews').onSnapshot(snap=>{
   if(!snap.metadata.fromCache)clearTimeout(timer);

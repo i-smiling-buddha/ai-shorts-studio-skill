@@ -6,6 +6,8 @@
 [![CI](https://github.com/i-smiling-buddha/ai-shorts-studio-skill/actions/workflows/ci.yml/badge.svg)](https://github.com/i-smiling-buddha/ai-shorts-studio-skill/actions/workflows/ci.yml)
 [![skills.sh](https://skills.sh/b/i-smiling-buddha/ai-shorts-studio-skill)](https://skills.sh/i-smiling-buddha/ai-shorts-studio-skill)
 
+![AI Shorts Studio Skill infographic: Idea → Script → Clips → Edit → Shorts, 3 modes — Story Kit, Mascot Shorts Studio, Editing Studio](ai-shorts-studio-infographic.png)
+
 **Your AI video editor for YouTube Shorts. Plan · Generate · Edit · Review.**
 
 > Drop your voice recording and clips into a folder, say "start editing", and your agent cuts the beats, builds a storyboard you approve or reject card by card, and renders the next draft from your notes, in your channel's own style.
@@ -70,6 +72,9 @@ Fonts (Anton, Poppins Bold with Devanagari, SIL Open Font License) are bundled i
 | **Brand kit** | `Brand Kit/brand-kit.md` learned from your reference + approved videos (1 frame per second) |
 | **Storyboard** | one card per beat with the cut playing, captions, B-roll, assets, Approve / Reject / Feedback |
 | **Draft loop** | notes saved to `notes.json`, next draft planned from them, approved changes added to the brand kit |
+| **Pre-render QC** | `qc.py pre` catches gaps, overlaps, scenes that don't cover the voice, repeated or missing clips, clips too short (would loop), 9:16 on a board, missing card fields/logos, unreadable caption speed — before a single frame is rendered |
+| **Post-render QC** | `qc.py post` grades the file PASS / WARN / FAIL: 1080×1920 / 30 fps, duration vs voice, loudness (−14 LUFS, true peak ≤ −1 dBTP), black frames, frozen video, silence gaps, harsh flashes, plus a contact sheet of every cut to look at |
+| **Works in any agent** | the storyboard saves to Claude's artifact database when available, otherwise in your browser with Download / Import `notes.json` — also from a file on disk |
 | **Credit safety** | never renders or generates without your OK: plan and stills first |
 
 ## Mode C — Editing Studio (for beginners)
@@ -104,8 +109,10 @@ Just ask your agent:
 Or run the renderer yourself:
 
 ```bash
+python skills/ai-shorts-studio/scripts/qc.py pre timeline.json                        # check the plan
 python skills/ai-shorts-studio/scripts/studio.py timeline.json out/short.mp4 --stills   # preview frames
 python skills/ai-shorts-studio/scripts/studio.py timeline.json out/short.mp4            # full render
+python skills/ai-shorts-studio/scripts/qc.py post out/short.mp4 --timeline timeline.json --sheet out/cuts.jpg
 python skills/ai-shorts-studio/scripts/maskclean.py clip.mp4 clip_fixed.mp4 --ref 0.5
 ```
 
@@ -126,6 +133,7 @@ Sample `library.json`, `timeline.json` and `beats.json` are in `skills/ai-shorts
 ## Credits
 
 - The Editing Studio review loop (reference frames → brand kit → beat cuts → storyboard with Approve / Reject / Feedback → notes → next draft) was inspired by [@AbdulMoizCreator](https://www.youtube.com/@AbdulMoizCreator)'s Short "How to Edit like a Pro with Claude".
+- Quality-control ideas adapted (no code copied) from [kajisho5/ffmpeg-skill](https://github.com/kajisho5/ffmpeg-skill) (graded PASS / WARN / FAIL content checks) and [browser-use/video-use](https://github.com/browser-use/video-use) (inspect the render at every cut, loudness targets, capped self-review passes, a per-project decision log). [Tella's video skills](https://www.tella.com/skills) confirmed the plan-first, render-after-approval rule.
 - Offline speech recognition by [sherpa-onnx](https://github.com/k2-fsa/sherpa-onnx). Fonts: [Anton](https://github.com/googlefonts/AntonFont) and [Poppins](https://github.com/itfoundry/Poppins) (SIL OFL).
 
 Built on [FFmpeg](https://ffmpeg.org), [OpenCV](https://opencv.org) and [Pillow](https://python-pillow.org).

@@ -11,14 +11,18 @@ ap.add_argument("--trim", type=float, default=1e9, help="cut the clip at this ti
 ap.add_argument("--no-polish", action="store_true")
 a = ap.parse_args()
 
-cap = cv2.VideoCapture(a.src); fps = cap.get(5) or 24; frames = []
+cap = cv2.VideoCapture(a.src)
+if not cap.isOpened(): sys.exit(f"cannot open {a.src}")
+fps = cap.get(5) or 24; frames = []
 while True:
     ok, f = cap.read()
     if not ok or len(frames) / fps >= a.trim: break
     frames.append(f)
+if not frames: sys.exit(f"no frames could be read from {a.src}")
 H, W = frames[0].shape[:2]
 g = cv2.cvtColor(frames[len(frames) // 2], cv2.COLOR_BGR2GRAY)
 cols = np.where(g.mean(0) > 14)[0]; rows = np.where(g.mean(1) > 14)[0]
+if len(cols) < 16 or len(rows) < 16: cols, rows = np.arange(W), np.arange(H)   # dark frame: use the whole frame
 cx0, cx1, cy0, cy1 = cols[0], cols[-1], rows[0], rows[-1]; cw, chh = cx1 - cx0, cy1 - cy0
 S = max(cw, chh) / 1080.0 if chh <= cw * 1.3 else cw / 1080.0
 K = lambda n: np.ones((max(3, int(n * S)) | 1,) * 2, np.uint8)
@@ -48,7 +52,8 @@ for f in frames:
     else:                                                     # outlier frame: reuse previous mask
         masks.append(masks[-1] if masks else None); darks.append(r[1] if r else None)
         boxes.append(boxes[-1].copy() if boxes else None)
-first = next(i for i, m in enumerate(masks) if m is not None)
+first = next((i for i, m in enumerate(masks) if m is not None), None)
+if first is None: sys.exit("no face mask found in this clip — nothing to clean (is it the masked mascot?)")
 for i in range(first): masks[i], boxes[i] = masks[first], boxes[first]
 B = np.array(boxes); Bs = np.array([B[max(0, i - 2):i + 3].mean(0) for i in range(len(B))])
 
@@ -86,8 +91,12 @@ if not a.no_polish:
         gate = cv2.GaussianBlur(gate, (0, 0), 6 * S)[..., None]
         flat[i] = np.clip(flat[i].astype(np.float32) + d * gate, 0, 255).astype(np.uint8)
 
-tmp = tempfile.mktemp(suffix=".avi"); out = cv2.VideoWriter(tmp, cv2.VideoWriter_fourcc(*"MJPG"), fps, (W, H))
-for f in flat: out.write(f)
-out.release()
-subprocess.run(["ffmpeg", "-v", "error", "-y", "-i", tmp, "-c:v", "libx264", "-crf", "16", "-preset", "veryfast", "-pix_fmt", "yuv420p", a.dst], check=True)
-os.remove(tmp); print("wrote", a.dst, len(flat), "frames")
+fd, tmp = tempfile.mkstemp(suffix=".avi"); os.close(fd)
+try:
+    out = cv2.VideoWriter(tmp, cv2.VideoWriter_fourcc(*"MJPG"), fps, (W, H))
+    for f in flat: out.write(f)
+    out.release()
+    subprocess.run(["ffmpeg", "-v", "error", "-y", "-i", tmp, "-c:v", "libx264", "-crf", "16", "-preset", "veryfast", "-pix_fmt", "yuv420p", a.dst], check=True)
+finally:
+    if os.path.exists(tmp): os.remove(tmp)
+print("wrote", a.dst, len(flat), "frames")
