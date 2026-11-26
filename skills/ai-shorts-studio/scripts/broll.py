@@ -154,11 +154,12 @@ def _chat(L, d, w, h, t, dur, c):
 _DRAW = {"code": _code, "search": _search, "multimodal": _multimodal, "mindmap": _mindmap, "chat": _chat}
 
 
-def broll_frame(style, t, dur, color, w, h):
+def broll_frame(style, t, dur, color, w, h, safe_bottom=0):
+    """safe_bottom: pixels at the bottom kept free of graphics (room for captions)."""
     if style not in _DRAW: raise ValueError(f"unknown B-roll style {style!r}; use one of {STYLES}")
     color = tuple(int(v) for v in color)
     img = _bg(w, h, color, t)
     layer = Image.new("RGBA", (w, h), (0, 0, 0, 0)); d = ImageDraw.Draw(layer)
-    _DRAW[style](layer, d, w, h, t, dur, color)
+    _DRAW[style](layer, d, w, max(200, h - safe_bottom), t, dur, color)
     img.alpha_composite(_glow(layer, 10, .9))
     return np.asarray(img.convert("RGB"))

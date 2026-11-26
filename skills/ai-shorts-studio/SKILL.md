@@ -3,7 +3,7 @@ name: ai-shorts-studio
 description: Plan, generate and edit AI YouTube Shorts and story videos — Google Flow/Veo story kits (history, mythology, kids 3D, viral cute), faceless masked-mascot Shorts (clip library, mask-mouth fix, board/split templates, official logos, Hindi captions, SFX) and a beginner Editing Studio that creates the folders, learns your style into a brand kit, cuts beats, builds an Approve/Reject storyboard and makes the next draft from your notes.
 license: MIT
 metadata:
-  version: "1.2.0"
+  version: "1.3.0"
 ---
 
 
@@ -138,10 +138,11 @@ Clips live in a folder on the user's computer (ask which the first time; connect
    - Optional per item: a 3–5 s full-screen B-roll of what the product does (abstract glowing UI, prompted with *no readable text and no logos*).
 3. **Official logos** for named products (Top-N, reviews, comparisons) — required so viewers recognise the product. Only official files the user supplies from each company's brand/press kit (`logos/<name>.png`, transparent PNG; verify alpha with transparent-png-check). Never let a model generate a logo and never redraw one in code. Composite unchanged (no recolour/stretch/crop/effects on the mark; proportional scale; clear space; a glow behind is fine), brand's own spelling beside it, used only to identify the product, never implying sponsorship. Mention once that each company's brand guidelines govern logo use. Missing logo → name card only, and tell the user which are missing.
 4. **All on-screen text is rendered in code** (ranks, names, taglines, chips, captions, pills) — never by the video model.
-5. Write `timeline.json` and run **pre-render QC**: `python3 scripts/qc.py pre timeline.json`. Fix every FAIL (gaps/overlaps, scenes not covering the voice, missing or repeated clips, a scene longer than its clip + 1 s, 9:16 clip on a board, missing card fields or logo files, captions past the voice). Read the WARNs to the user in plain words.
-6. Render stills (`python3 scripts/studio.py timeline.json out/x.mp4 --stills`), look at them, **show the user the stills + scene plan + QC summary and wait for OK**. Then render the full video (`studio.py` re-runs pre-render QC and stops on FAIL).
-7. **Post-render QC + self-review**: `python3 scripts/qc.py post out/x.mp4 --timeline timeline.json --sheet out/qc_cuts.jpg` checks 1080x1920 / 30 fps, duration vs voice, loudness (about -14 LUFS, true peak ≤ -1 dBTP), black frames, frozen video, silence gaps and big flashes, and writes a sheet of every cut (0.5 s before, 0.1 s and 0.6 s after). Look at the sheet and at full-size frames for hidden captions, cropped mascot, wrong logo, mask mouth. Fix and re-check at most 3 times, then tell the user what is still open. Deliver with SendUserFile and save next to the user's library if connected.
-8. Channel name and avatar for the outro pill come from `Brand Kit/brand-kit.md` (e.g. `"channel_name": "Techie Monk"` with `Brand Kit/channel_emblem.png`) — never a guessed name or the creator's pen name.
+5. **Text never covers the presenter's face (owner rule).** Captions always sit in the bottom band (full/outro y≈1720, board y≈1770). Hook title lines leave out `"y"` so `studio.py` stacks them in the bottom band; top-of-frame text (e.g. the outro question) must stay above the hair. `qc.py pre` FAILs any title or caption line inside the face band (`"face_band": [330, 1000]` on 1080x1920, override per timeline if the presenter sits higher/lower). Check full-size stills: no letter may touch the eyes, glasses or mask.
+6. Write `timeline.json` and run **pre-render QC**: `python3 scripts/qc.py pre timeline.json`. Fix every FAIL (gaps/overlaps, scenes not covering the voice, missing or repeated clips, a scene longer than its clip + 1 s, 9:16 clip on a board, missing card fields or logo files, captions past the voice). Read the WARNs to the user in plain words.
+7. Render stills (`python3 scripts/studio.py timeline.json out/x.mp4 --stills`), look at them, **show the user the stills + scene plan + QC summary and wait for OK**. Then render the full video (`studio.py` re-runs pre-render QC and stops on FAIL).
+8. **Post-render QC + self-review**: `python3 scripts/qc.py post out/x.mp4 --timeline timeline.json --sheet out/qc_cuts.jpg` checks 1080x1920 / 30 fps, duration vs voice, loudness (about -14 LUFS, true peak ≤ -1 dBTP), black frames, frozen video, silence gaps and big flashes, and writes a sheet of every cut (0.5 s before, 0.1 s and 0.6 s after). Look at the sheet and at full-size frames for hidden captions, cropped mascot, wrong logo, mask mouth. Fix and re-check at most 3 times, then tell the user what is still open. Deliver with SendUserFile and save next to the user's library if connected.
+9. Channel name and avatar for the outro pill come from `Brand Kit/brand-kit.md` (e.g. `"channel_name": "Techie Monk"` with `Brand Kit/channel_emblem.png`) — never a guessed name or the creator's pen name.
 
 ### timeline.json
 ```json
@@ -151,14 +152,14 @@ Clips live in a folder on the user's computer (ask which the first time; connect
  "captions": [{"s": 5.35, "e": 8.88, "text": "2026 में AI की दुनिया तेज़ी से बढ़ रही है"}],
  "scenes": [
   {"type": "full", "clip": "hook_leanin", "t0": 0, "t1": 9.4, "overlay": {"title": [
-     {"words": ["TOP","5"], "colors": ["white","yellow"], "size": 210, "font": "title", "y": 230, "t": 1.4}]}},
+     {"words": ["TOP","5"], "colors": ["white","yellow"], "size": 210, "font": "title", "t": 0.15}]}},
   {"type": "full", "clip": "talk_excited", "t0": 9.4, "t1": 15.0},
   {"type": "board", "clip": "sq_explain", "t0": 15.0, "t1": 22.3, "card": {"rank": 5, "name": "CURSOR", "tag": "AI Code Editor",
      "chips": ["Coding","Software Dev"], "color": [0,229,255], "num_t": 15.12, "name_t": 16.48, "logo": "logos/cursor.png"}},
   {"type": "outro", "clip": "outro_thumbs", "t0": 56.6, "t1": 65.3, "overlay": {"question": "आपका FAVORITE?",
      "question_colors": ["white","yellow"], "question_t": 57.7, "comment_t": 60.7, "follow_t": 62.3}}]}
 ```
-`t0/t1` follow the voice; `num_t`/`name_t` = when the rank / name is spoken; scenes cover the whole voice; `clip_offset` starts a clip later; colours: white, yellow, cyan, red, green.
+`t0/t1` follow the voice; `num_t`/`name_t` = when the rank / name is spoken; scenes cover the whole voice; `clip_offset` starts a clip later; `speed` (0.5–1.5) slows/speeds a clip; `end_hold` (s) keeps the last frame after the voice; `flash` per scene overrides the cut flash; `caption_y` / `face_band` tune the text-safe layout; colours: white, yellow, cyan, red, green.
 Optional B-roll on a board scene (code-rendered, free, no readable text, no logos), shown in the clip panel with a 0.25 s fade: `"broll": {"style": "code|search|multimodal|mindmap|chat", "t0": 18.5, "t1": 21.0}` — start ~2 s after `name_t`, 2–3 s long, inside the scene; colour follows the card.
 
 ## 4. Scripts (in `scripts/`)

@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """AI Shorts Studio — renders a 9:16 Short from a clip library + timeline JSON.
-usage: python3 studio.py timeline.json out.mp4 [--stills] [--force]
+usage: python3 studio.py timeline.json out.mp4 [--stills] [--at T1,T2,...] [--force]
+--at saves full-size stills at exact times (at_<t>.jpg) without rendering video.
 Runs qc.py pre-render checks first and stops on FAIL unless --force.
 """
 import json, os, sys, math, subprocess, tempfile
@@ -213,16 +214,28 @@ def shade(fr, y0=0): return (fr.astype(np.float32) * (1 - GRAD[y0:y0 + fr.shape[
 
 # ---------------- main ----------------
 ALLOW_LOOP = False
+END_HOLD = 0.0
+CAP_Y = {"full": 1720, "outro": 1720, "board": 1770}   # caption centre lines: bottom band only (face stays clear)
+AT = None
 
 def main():
     global ALLOW_LOOP
     if len(sys.argv) < 3: sys.exit(__doc__)
     tl_path, out = sys.argv[1], sys.argv[2]; stills = "--stills" in sys.argv
+    global AT; AT = [float(x) for x in sys.argv[sys.argv.index("--at") + 1].split(",")] if "--at" in sys.argv else None
     sys.path.insert(0, HERE); import qc                 # pre-render quality control
     rep = qc.check_timeline(tl_path); rep.print("pre-render")
     if rep.failed and "--force" not in sys.argv: sys.exit("QC failed — fix the timeline (or pass --force to render anyway)")
     T = json.load(open(tl_path, encoding="utf-8")); base = os.path.dirname(os.path.abspath(tl_path))
     ALLOW_LOOP = bool(T.get("allow_loop"))
+    global END_HOLD; END_HOLD = float(T.get("end_hold", 0))   # seconds the last frame stays after the voice ends
+    global CAP_Y; CAP_Y = {**CAP_Y, **T.get("caption_y", {})}
+    for sc_ in T["scenes"]:                         # hook title lines without "y" stack in the bottom band
+        tl = sc_.get("overlay", {}).get("title")
+        if tl and any("y" not in l for l in tl):
+            y = CAP_Y["full"] - 90
+            for l in reversed(tl):
+                h = l.get("size", 170) * 1.12; l["y"] = y - h / 2; y -= h
     L = json.load(open(os.path.join(base, T["library"])))
     lib = {c["id"]: c for c in L["clips"]}
     for c in lib.values():
@@ -241,6 +254,8 @@ def main():
         cl = lib[s["clip"]]; path = os.path.join(base, L.get("root", "."), cl["file"])
         if s["type"] == "board": box, mode = (W, H - CARD_H), "width_top"
         else: box, mode = (W, H), "cover"
+        if AT is not None and not any(s["t0"] <= ta < s["t1"] + (END_HOLD if si == len(T["scenes"]) - 1 else 0) for ta in AT):
+            continue                                       # nothing requested in this scene
         clip = load_clip(path, box[0], box[1], mode, tuple(cl.get("focus", [.5, .4])))
         ov = s.get("overlay", {})
         if ov.get("title"):
@@ -254,18 +269,19 @@ def main():
             lt = t - s["t0"]; zoom = 1.0 + 0.003 * lt
             if s["type"] == "board":
                 fr = np.zeros((H, W, 3), np.uint8)
-                fr[CARD_H:] = shade(clip_frame(clip, lt + s.get("clip_offset", 0), *box, mode, zoom), CARD_H)
+                fr[CARD_H:] = shade(clip_frame(clip, lt * s.get("speed", 1.0) + s.get("clip_offset", 0), *box, mode, zoom), CARD_H)
                 br = s.get("broll")
                 if br and br["t0"] <= t < br["t1"]:          # code-rendered B-roll insert in the clip panel
                     import broll
                     bt = t - br["t0"]; bd = br["t1"] - br["t0"]
                     a = min(1.0, bt / .25, (br["t1"] - t) / .25)
-                    img = broll.broll_frame(br["style"], bt, bd, br.get("color") or s["card"].get("color", [0, 229, 255]), W, H - CARD_H)
+                    img = broll.broll_frame(br["style"], bt, bd, br.get("color") or s["card"].get("color", [0, 229, 255]), W, H - CARD_H,
+                                            safe_bottom=br.get("safe_bottom", 230))   # keep the caption band clear
                     fr[CARD_H:] = (fr[CARD_H:].astype(np.float32) * (1 - a) + img.astype(np.float32) * a).astype(np.uint8)
-                draw_card(fr, s["card"], t, CARD_H, total); draw_caption(fr, t, 1770, CH)
+                draw_card(fr, s["card"], t, CARD_H, total); draw_caption(fr, t, CAP_Y["board"], CH)
             else:
                 pz = 1 + .07 * (1 - ease_out(lt / .28)) if si > 0 else 1
-                fr = shade(clip_frame(clip, lt + s.get("clip_offset", 0), *box, mode, zoom * pz))
+                fr = shade(clip_frame(clip, lt * s.get("speed", 1.0) + s.get("clip_offset", 0), *box, mode, zoom * pz))
                 if ov.get("title"):
                     for li, (line, im) in enumerate(zip(ov["title"], ov["_imgs"])):
                         p = (t - line["t"]) / .4
@@ -277,10 +293,17 @@ def main():
                     if p > 0: paste(fr, ov["_c"], 880, 520 + 8 * math.sin(t * 6), scale=ease_back(p), rot=8 * math.sin(t * 4))
                     p = (t - ov["follow_t"]) / .35
                     if p > 0: paste(fr, ov["_f"], W / 2, 1270, scale=ease_back(p))
-                draw_caption(fr, t, 1560 if s["type"] == "full" else 1640, CH)
-            if si > 0 and lt < .15: fr = np.clip(fr.astype(np.float32) + FLASH * (1 - lt / .15), 0, 255).astype(np.uint8)
+                draw_caption(fr, t, CAP_Y[s["type"]], CH)   # always in the bottom band, never over the face
+            fl = s.get("flash", FLASH)                     # per-scene override, e.g. 0 for a soft cut
+            if si > 0 and lt < .15 and fl: fr = np.clip(fr.astype(np.float32) + fl * (1 - lt / .15), 0, 255).astype(np.uint8)
             return fr
 
+        if AT is not None:                                 # --at t1,t2,...: full-size stills at exact times
+            last = si == len(T["scenes"]) - 1
+            for ta in AT:
+                if s["t0"] <= ta < s["t1"] + (END_HOLD if last else 0):
+                    Image.fromarray(frame(ta)).save(os.path.join(os.path.dirname(out) or ".", f"at_{ta:06.2f}.jpg"), quality=90)
+            continue
         if stills:
             tm = (s["t0"] + s["t1"]) / 2 if s["type"] != "board" else s["card"]["name_t"] + 2.5
             if s.get("broll"): tm = (s["broll"]["t0"] + s["broll"]["t1"]) / 2
@@ -289,14 +312,15 @@ def main():
         part = os.path.join(tmp, f"s{si:02d}.mp4")
         p = subprocess.Popen(["ffmpeg", "-v", "error", "-y", "-f", "rawvideo", "-pix_fmt", "rgb24", "-s", f"{W}x{H}", "-r", str(FPS), "-i", "-",
                               "-c:v", "libx264", "-preset", "veryfast", "-crf", "19", "-pix_fmt", "yuv420p", part], stdin=subprocess.PIPE)
-        for n in range(round(s["t0"] * FPS), round(s["t1"] * FPS)): p.stdin.write(frame(n / FPS).tobytes())
+        t_end = s["t1"] + (END_HOLD if si == len(T["scenes"]) - 1 else 0)   # last scene holds on after the voice
+        for n in range(round(s["t0"] * FPS), round(t_end * FPS)): p.stdin.write(frame(n / FPS).tobytes())
         p.stdin.close(); p.wait(); parts.append(part); print("scene", si, "done", flush=True)
         del clip
-    if stills: return
+    if stills or AT is not None: return
     lst = os.path.join(tmp, "list.txt"); open(lst, "w").write("".join(f"file '{x}'\n" for x in parts))
     vid = os.path.join(tmp, "video.mp4"); subprocess.run(["ffmpeg", "-v", "error", "-y", "-f", "concat", "-safe", "0", "-i", lst, "-c", "copy", vid], check=True)
     # SFX: whoosh at scene cuts, pop on card numbers
-    sr = 48000; dur = T["scenes"][-1]["t1"]; sfx = np.zeros(int(dur * sr) + sr, np.float32); rng = np.random.default_rng(1)
+    sr = 48000; dur = T["scenes"][-1]["t1"] + END_HOLD; sfx = np.zeros(int(dur * sr) + sr, np.float32); rng = np.random.default_rng(1)
     def add(t, y):
         i = int(t * sr); sfx[i:i + len(y)] += y[:max(0, len(sfx) - i)]
     for s in T["scenes"][1:]:
@@ -310,7 +334,7 @@ def main():
     w.writeframes((np.clip(sfx, -1, 1) * 32767).astype(np.int16).tobytes()); w.close()
     voice = os.path.join(base, T["voice"])
     subprocess.run(["ffmpeg", "-v", "error", "-y", "-i", vid, "-i", voice, "-i", sp, "-filter_complex",
-                    "[1:a]highpass=f=80,acompressor=threshold=-20dB:ratio=3,loudnorm=I=-14:TP=-1.5,aresample=48000[v];[v][2:a]amix=inputs=2:normalize=0:duration=first,alimiter=limit=0.85:level=disabled[a]",
+                    f"[1:a]highpass=f=80,acompressor=threshold=-20dB:ratio=3,loudnorm=I=-14:TP=-1.5,aresample=48000,apad=pad_dur={END_HOLD:.2f}[v];[v][2:a]amix=inputs=2:normalize=0:duration=first,alimiter=limit=0.85:level=disabled[a]",
                     "-map", "0:v", "-map", "[a]", "-c:v", "copy", "-c:a", "aac", "-b:a", "192k", "-shortest", "-movflags", "+faststart", out], check=True)
     print("wrote", out)
 

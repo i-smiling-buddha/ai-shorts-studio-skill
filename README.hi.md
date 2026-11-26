@@ -99,6 +99,7 @@ Studio/
 | **No loops** | हर scene में अलग clip। Library छोटी हो तो skill बताती है कि कौन-सी clips और बनानी हैं। |
 | **Pacing** | हर 2–4 s में बदलाव, list items 6–8 s के। One-click AI editors जितनी जल्दबाज़ी नहीं। |
 | **Free B-roll** | Board panel में code से बने 5 तरह के B-roll: code editor, search → sources → answer, multimodal, mind-map और chat। ये दिखाते हैं कि tool क्या करता है। इनमें credits नहीं लगते, और न fake product screens होती हैं, न logos। |
+| **Face-safe text** | Captions और hook title हमेशा नीचे की पट्टी में रहते हैं। अगर कोई text presenter के चेहरे पर आए तो QC उसे FAIL कर देता है। |
 | **Pre-render QC** | `qc.py pre` render से पहले ही ये गलतियाँ पकड़ता है: timeline में gap या overlap, voice पूरी cover न होना, clip repeat या missing, बहुत छोटी clip (जो loop हो जाती), board पर 9:16 clip, card fields/logos की कमी, बहुत तेज़ captions। |
 | **Post-render QC** | `qc.py post` बनी हुई video को PASS / WARN / FAIL देता है। Check होते हैं: 1080×1920 / 30 fps, duration, loudness (−14 LUFS, true peak ≤ −1), black frames, frozen video, silence और तेज़ flashes। साथ में हर cut की contact sheet बनती है। |
 | **हर agent में चलता है** | Claude में storyboard के notes artifact database में save होते हैं। दूसरी जगह browser में save होते हैं, और `notes.json` Download / Import कर सकते हैं। Disk पर रखी file से भी खुलता है। |

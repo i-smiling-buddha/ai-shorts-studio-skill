@@ -25,7 +25,7 @@ class StudioTest(unittest.TestCase):
                    "captions": [{"s": 0.2, "e": 2.0, "text": "हेलो AI दुनिया test"}], "hot_words": {"AI": "cyan"},
                    "scenes": [
                        {"type": "full", "clip": "a", "t0": 0, "t1": 2.0, "overlay": {"title": [
-                           {"words": ["TOP", "1"], "colors": ["white", "yellow"], "size": 150, "font": "title", "y": 230, "t": 0.2}]}},
+                           {"words": ["TOP", "1"], "colors": ["white", "yellow"], "size": 150, "font": "title", "t": 0.2}]}},
                        {"type": "board", "clip": "sq", "t0": 2.0, "t1": 4.5, "card": {"rank": 1, "name": "TOOL", "tag": "Test tag",
                         "chips": ["One", "Two"], "color": [0, 229, 255], "num_t": 2.1, "name_t": 2.5},
                         "broll": {"style": "code", "t0": 3.3, "t1": 4.3}},
@@ -61,6 +61,22 @@ class StudioTest(unittest.TestCase):
         def edit(T): T["scenes"][1]["broll"]["t1"] = 6.0
         r = self.qc("pre", self.bad_timeline(edit))
         self.assertEqual(r.returncode, 1); self.assertIn("broll", r.stdout)
+
+    def test_qc_pre_title_over_face(self):
+        def edit(T): T["scenes"][0]["overlay"]["title"][0]["y"] = 600
+        r = self.qc("pre", self.bad_timeline(edit))
+        self.assertEqual(r.returncode, 1); self.assertIn("face", r.stdout)
+
+    def test_end_hold_and_at(self):
+        def edit(T): T["end_hold"] = 0.8; T["scenes"][2]["speed"] = 0.9
+        tl = self.bad_timeline(edit)
+        subprocess.run([sys.executable, os.path.join(SCRIPTS, "studio.py"), tl, os.path.join(self.d, "at", "x.mp4"), "--at", "0.5,7.5"], check=True)
+        self.assertTrue(os.path.exists(os.path.join(self.d, "at", "at_000.50.jpg")))
+        self.assertTrue(os.path.exists(os.path.join(self.d, "at", "at_007.50.jpg")))
+        out = os.path.join(self.d, "hold", "v.mp4")
+        subprocess.run([sys.executable, os.path.join(SCRIPTS, "studio.py"), tl, out], check=True)
+        dur = float(subprocess.check_output(["ffprobe", "-v", "error", "-show_entries", "format=duration", "-of", "csv=p=0", out]))
+        self.assertAlmostEqual(dur, 7.8, delta=0.3)
 
     def qc(self, *args):
         return subprocess.run([sys.executable, os.path.join(SCRIPTS, "qc.py"), *args], capture_output=True, text=True)

@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.3.0 — 2026-11-26
+
+- **Text never covers the presenter's face (owner rule).** Captions always in the bottom band (`caption_y`, defaults full/outro 1720, board 1770); hook title lines without `"y"` stack in the bottom band automatically. `qc.py pre` FAILs any title or caption inside the face band (`face_band`, default y 330–1000 on 1080×1920).
+- **Hook timing:** `qc.py pre` warns when the first title appears after 0.5 s.
+- **B-roll caption-safe area:** graphics stay above the caption band (`safe_bottom`, default 230 px).
+- **`end_hold`:** keep the last frame (with outro overlays) for N seconds after the voice; audio is padded to match.
+- **`speed`** per scene (0.5–1.5) to slow a clip instead of freezing it; **`flash`** per scene (e.g. 0 for a soft cut into the outro).
+- **`studio.py --at T1,T2,…`** saves full-size stills at exact times without rendering the video.
+- 12 tests.
+
 ## 1.2.0 — 2026-11-26
 
 - **Code-rendered B-roll (`scripts/broll.py`)**: five abstract styles — `code`, `search`, `multimodal`, `mindmap`, `chat` — drawn in the board's clip panel with a 0.25 s fade, tinted with the card colour. Free (no Flow credits), no readable text, no logos. Add `"broll": {"style", "t0", "t1"}` to a board scene.

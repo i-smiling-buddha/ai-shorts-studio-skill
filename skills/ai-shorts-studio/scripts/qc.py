@@ -92,8 +92,10 @@ def check_timeline(tl_path, rep=None):
         used.setdefault(cid, i)
         path = os.path.join(root, c["file"]); p = probe(path); vs = vstream(p)
         if not vs: rep.fail(f"clip {cid}", f"missing or unreadable: {path}"); continue
-        cdur = float(p["format"]["duration"]) - s.get("clip_offset", 0)
-        need = s["t1"] - s["t0"]
+        sp = float(s.get("speed", 1.0))
+        if not (0.5 <= sp <= 1.5): rep.fail(f"scene {i}", f"speed {sp} outside 0.5–1.5")
+        cdur = (float(p["format"]["duration"]) - s.get("clip_offset", 0)) / sp
+        need = s["t1"] - s["t0"] + (float(T.get("end_hold", 0)) if i == len(scenes) - 1 else 0)
         if need > cdur + MAX_HOLD and not T.get("allow_loop"):
             rep.fail(f"clip {cid}", f"{cdur:.1f} s usable but scene needs {need:.1f} s — would loop. Split the scene or add a clip")
         elif need > cdur: rep.warn(f"clip {cid}", f"holds last frame for {need - cdur:.2f} s")
@@ -153,6 +155,22 @@ def check_timeline(tl_path, rep=None):
     if not T.get("channel_name"): rep.warn("outro", "no channel_name — follow pill will say 'My Channel'")
     fl = T.get("flash", 160)
     if not (0 <= fl <= 255): rep.fail("flash", f"flash {fl} outside 0–255")
+    # text must never cover the presenter's face (owner rule): face band on 1080x1920 full / outro scenes
+    fb = T.get("face_band", [330, 1000])
+    cy = {"full": 1720, "outro": 1720, "board": 1770, **T.get("caption_y", {})}
+    for k in ("full", "outro"):
+        if fb[0] - 50 < cy[k] < fb[1] + 50: rep.fail("captions", f"{k} caption line y={cy[k]} sits on the face band {fb} — keep captions at the bottom")
+    for i, s in enumerate(scenes):
+        for l in s.get("overlay", {}).get("title", []) or []:
+            if "y" not in l: continue
+            half = l.get("size", 170) * 0.7
+            if l["y"] + half > fb[0] and l["y"] - half < fb[1]:
+                rep.fail(f"scene {i}", f"title {' '.join(l.get('words', []))!r} at y={l['y']} covers the presenter's face {fb} — omit \"y\" to stack it in the bottom band")
+    eh = T.get("end_hold", 0)
+    if not (0 <= eh <= 3): rep.fail("end_hold", f"end_hold {eh} s outside 0–3")
+    if scenes and scenes[0].get("overlay", {}).get("title"):
+        first = min(l.get("t", 0) for l in scenes[0]["overlay"]["title"])
+        if first > 0.5: rep.warn("hook", f"first title appears at {first:.1f} s — the first second of a Short should already show the hook")
     return rep
 
 
@@ -182,7 +200,8 @@ def check_render(path, tl_path=None, sheet=None, rep=None):
     if tl_path:
         T = json.load(open(tl_path, encoding="utf-8"))
         vdur = duration(os.path.join(os.path.dirname(os.path.abspath(tl_path)), T["voice"]))
-        if vdur: (rep.ok if abs(dur - vdur) < 0.3 else rep.fail)("duration", f"{dur:.2f} s (voice {vdur:.2f} s)")
+        hold = float(T.get("end_hold", 0))
+        if vdur: (rep.ok if abs(dur - vdur - hold) < 0.3 else rep.fail)("duration", f"{dur:.2f} s (voice {vdur:.2f} s + end hold {hold:.1f} s)")
     else: rep.ok("duration", f"{dur:.2f} s")
     if dur > 180: rep.warn("duration", "over 3 minutes — not a Short")
 

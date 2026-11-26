@@ -102,8 +102,7 @@
       ],
       "size": 210,
       "font": "title",
-      "y": 230,
-      "t": 1.4
+      "t": 0.15
      },
      {
       "words": [
@@ -116,8 +115,7 @@
       ],
       "size": 170,
       "font": "title",
-      "y": 420,
-      "t": 1.7
+      "t": 1.6
      },
      {
       "words": [
@@ -135,7 +133,6 @@
        "yellow"
       ],
       "size": 64,
-      "y": 560,
       "t": 2.6
      }
     ]
@@ -326,5 +323,7 @@
    }
   }
  ],
- "channel_avatar": null
+ "channel_avatar": null,
+ "flash": 60,
+ "end_hold": 1.0
 }

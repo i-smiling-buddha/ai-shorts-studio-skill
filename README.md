@@ -73,6 +73,7 @@ Fonts (Anton, Poppins Bold with Devanagari, SIL Open Font License) are bundled i
 | **Storyboard** | one card per beat with the cut playing, captions, B-roll, assets, Approve / Reject / Feedback |
 | **Draft loop** | notes saved to `notes.json`, next draft planned from them, approved changes added to the brand kit |
 | **Free B-roll** | five code-rendered styles (code editor, search → sources → answer, multimodal orbit, mind-map, chat) inside the board panel: shows what each tool does, costs no credits, no fake product screens or logos |
+| **Face-safe text** | captions and hook titles always sit in the bottom band; QC fails any text over the presenter's face |
 | **Pre-render QC** | `qc.py pre` catches gaps, overlaps, scenes that don't cover the voice, repeated or missing clips, clips too short (would loop), 9:16 on a board, missing card fields/logos, unreadable caption speed — before a single frame is rendered |
 | **Post-render QC** | `qc.py post` grades the file PASS / WARN / FAIL: 1080×1920 / 30 fps, duration vs voice, loudness (−14 LUFS, true peak ≤ −1 dBTP), black frames, frozen video, silence gaps, harsh flashes, plus a contact sheet of every cut to look at |
 | **Works in any agent** | the storyboard saves to Claude's artifact database when available, otherwise in your browser with Download / Import `notes.json` — also from a file on disk |
