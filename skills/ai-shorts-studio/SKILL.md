@@ -3,7 +3,7 @@ name: ai-shorts-studio
 description: Plan, generate and edit AI YouTube Shorts and story videos — Google Flow/Veo story kits (history, mythology, kids 3D, viral cute), faceless masked-mascot Shorts (clip library, mask-mouth fix, board/split templates, official logos, Hindi captions, SFX) and a beginner Editing Studio that creates the folders, learns your style into a brand kit, cuts beats, builds an Approve/Reject storyboard and makes the next draft from your notes.
 license: MIT
 metadata:
-  version: "1.1.0"
+  version: "1.2.0"
 ---
 
 
@@ -159,10 +159,12 @@ Clips live in a folder on the user's computer (ask which the first time; connect
      "question_colors": ["white","yellow"], "question_t": 57.7, "comment_t": 60.7, "follow_t": 62.3}}]}
 ```
 `t0/t1` follow the voice; `num_t`/`name_t` = when the rank / name is spoken; scenes cover the whole voice; `clip_offset` starts a clip later; colours: white, yellow, cyan, red, green.
+Optional B-roll on a board scene (code-rendered, free, no readable text, no logos), shown in the clip panel with a 0.25 s fade: `"broll": {"style": "code|search|multimodal|mindmap|chat", "t0": 18.5, "t1": 21.0}` — start ~2 s after `name_t`, 2–3 s long, inside the scene; colour follows the card.
 
 ## 4. Scripts (in `scripts/`)
 - `scripts/studio.py` — `python3 scripts/studio.py timeline.json out/video.mp4 [--stills]`. Renders the 9:16 Short (full / board / outro scenes, cards, logos, captions, SFX, voice mix). Paths in the timeline are relative to the timeline file. Optional `"flash": 0–160` sets the white flash at cuts.
 - `scripts/maskclean.py` — `python3 scripts/maskclean.py in.mp4 out.mp4 [--ref SEC] [--trim SEC] [--no-polish]`. Removes mouth/smile shapes a video model paints on a fabric face mask and restores fabric texture.
+- `scripts/broll.py` — code-rendered B-roll styles: `code` (editor with typing lines), `search` (search bar → sources → answer), `multimodal` (image/audio/text orbiting a core), `mindmap` (nodes growing), `chat` (bubbles + image tiles).
 - `scripts/qc.py` — `qc.py pre timeline.json` (plan checks) and `qc.py post video.mp4 --timeline timeline.json --sheet cuts.jpg` (render checks). Grades PASS / WARN / FAIL; exit code 1 on FAIL.
 - `templates/storyboard.html` — the review dashboard for Mode C (reads `beats.json`, or `beats.js` when opened from disk, + `cuts/`). Saves notes to the Claude artifact database when available, otherwise in the browser with Download / Import `notes.json`.
 - `examples/` — sample `library.json` and `timeline.json`.

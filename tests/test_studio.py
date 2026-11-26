@@ -27,7 +27,8 @@ class StudioTest(unittest.TestCase):
                        {"type": "full", "clip": "a", "t0": 0, "t1": 2.0, "overlay": {"title": [
                            {"words": ["TOP", "1"], "colors": ["white", "yellow"], "size": 150, "font": "title", "y": 230, "t": 0.2}]}},
                        {"type": "board", "clip": "sq", "t0": 2.0, "t1": 4.5, "card": {"rank": 1, "name": "TOOL", "tag": "Test tag",
-                        "chips": ["One", "Two"], "color": [0, 229, 255], "num_t": 2.1, "name_t": 2.5}},
+                        "chips": ["One", "Two"], "color": [0, 229, 255], "num_t": 2.1, "name_t": 2.5},
+                        "broll": {"style": "code", "t0": 3.3, "t1": 4.3}},
                        {"type": "outro", "clip": "b", "t0": 4.5, "t1": 7.0, "overlay": {"question": "आपका FAVORITE?",
                         "question_t": 4.6, "comment_t": 5.0, "follow_t": 5.5}}]},
                   open(os.path.join(cls.d, "timeline.json"), "w"), ensure_ascii=False)
@@ -49,6 +50,17 @@ class StudioTest(unittest.TestCase):
         wh = subprocess.check_output(["ffprobe", "-v", "error", "-select_streams", "v:0", "-show_entries", "stream=width,height", "-of", "csv=p=0", out]).decode().strip()
         self.assertEqual(wh, "1080,1920")
 
+
+    def test_broll_styles(self):
+        sys.path.insert(0, SCRIPTS); import broll
+        for st in broll.STYLES:
+            f = broll.broll_frame(st, 1.0, 2.5, (0, 229, 255), 540, 480)
+            self.assertEqual(f.shape, (480, 540, 3)); self.assertGreater(f.std(), 5)
+
+    def test_qc_pre_broll_outside_scene(self):
+        def edit(T): T["scenes"][1]["broll"]["t1"] = 6.0
+        r = self.qc("pre", self.bad_timeline(edit))
+        self.assertEqual(r.returncode, 1); self.assertIn("broll", r.stdout)
 
     def qc(self, *args):
         return subprocess.run([sys.executable, os.path.join(SCRIPTS, "qc.py"), *args], capture_output=True, text=True)

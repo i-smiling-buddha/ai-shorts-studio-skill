@@ -255,6 +255,13 @@ def main():
             if s["type"] == "board":
                 fr = np.zeros((H, W, 3), np.uint8)
                 fr[CARD_H:] = shade(clip_frame(clip, lt + s.get("clip_offset", 0), *box, mode, zoom), CARD_H)
+                br = s.get("broll")
+                if br and br["t0"] <= t < br["t1"]:          # code-rendered B-roll insert in the clip panel
+                    import broll
+                    bt = t - br["t0"]; bd = br["t1"] - br["t0"]
+                    a = min(1.0, bt / .25, (br["t1"] - t) / .25)
+                    img = broll.broll_frame(br["style"], bt, bd, br.get("color") or s["card"].get("color", [0, 229, 255]), W, H - CARD_H)
+                    fr[CARD_H:] = (fr[CARD_H:].astype(np.float32) * (1 - a) + img.astype(np.float32) * a).astype(np.uint8)
                 draw_card(fr, s["card"], t, CARD_H, total); draw_caption(fr, t, 1770, CH)
             else:
                 pz = 1 + .07 * (1 - ease_out(lt / .28)) if si > 0 else 1
@@ -276,6 +283,7 @@ def main():
 
         if stills:
             tm = (s["t0"] + s["t1"]) / 2 if s["type"] != "board" else s["card"]["name_t"] + 2.5
+            if s.get("broll"): tm = (s["broll"]["t0"] + s["broll"]["t1"]) / 2
             Image.fromarray(frame(max(s["t0"] + .5, min(tm, s["t1"] - .05)))).resize((540, 960)).save(os.path.join(os.path.dirname(out) or ".", f"still_{si:02d}.jpg"), quality=88)
             continue
         part = os.path.join(tmp, f"s{si:02d}.mp4")

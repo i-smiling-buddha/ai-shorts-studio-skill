@@ -112,6 +112,11 @@ def check_timeline(tl_path, rep=None):
         if "num_t" in c and not (s["t0"] - 0.05 <= c["num_t"] <= s["t1"]) and not c.get("no_pop"):
             rep.fail(f"card {i}", f"num_t {c['num_t']} outside scene {s['t0']}–{s['t1']}")
         if "num_t" in c and "name_t" in c and c["name_t"] < c["num_t"]: rep.warn(f"card {i}", "name appears before the rank")
+        br = s.get("broll")
+        if br:
+            if br.get("style") not in ("code", "search", "multimodal", "mindmap", "chat"): rep.fail(f"broll {i}", f"unknown style {br.get('style')!r}")
+            if not (s["t0"] <= br.get("t0", -1) < br.get("t1", -1) <= s["t1"]): rep.fail(f"broll {i}", f"window {br.get('t0')}–{br.get('t1')} outside scene {s['t0']}–{s['t1']}")
+            elif "name_t" in c and br["t0"] < c["name_t"] + 0.8: rep.warn(f"broll {i}", "starts before the name has settled — viewers may miss which tool it is")
         if not c.get("no_pop"): ranks.append(c.get("rank"))
         logo = c.get("logo")
         if not logo: rep.warn(f"card {i}", f"no logo for {c.get('name')} — viewers may not recognise the product")

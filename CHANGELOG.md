@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.2.0 — 2026-11-26
+
+- **Code-rendered B-roll (`scripts/broll.py`)**: five abstract styles — `code`, `search`, `multimodal`, `mindmap`, `chat` — drawn in the board's clip panel with a 0.25 s fade, tinted with the card colour. Free (no Flow credits), no readable text, no logos. Add `"broll": {"style", "t0", "t1"}` to a board scene.
+- `qc.py pre` checks B-roll style and window (inside the scene, after the name has settled).
+- Stills show the B-roll moment when a scene has one. 10 tests.
+
 ## 1.1.0 — 2026-11-26
 
 Improvements from an external code review and from studying other open-source video skills.
